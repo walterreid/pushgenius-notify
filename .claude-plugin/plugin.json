@@ -1,0 +1,50 @@
+{
+  "name": "pushgenius-notify",
+  "displayName": "PushGenius Notify",
+  "description": "Push a notification to your phone (via PushGenius) when Claude Code finishes a turn or is blocked waiting on you.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Walter Reid",
+    "email": "walterreid@gmail.com"
+  },
+  "homepage": "https://github.com/walterreid/pushgenius-notify#readme",
+  "repository": "https://github.com/walterreid/pushgenius-notify",
+  "license": "MIT",
+  "keywords": [
+    "notifications",
+    "push",
+    "pushgenius",
+    "hooks"
+  ],
+  "documentationUrl": "https://github.com/walterreid/pushgenius-notify#readme",
+  "supportUrl": "https://github.com/walterreid/pushgenius-notify/issues",
+  "userConfig": {
+    "app_id": {
+      "type": "string",
+      "title": "PushGenius App ID (optional)",
+      "description": "Usually not needed: the REST key is already tied to one app. Fill in only if the API asks for it.",
+      "required": false,
+      "default": ""
+    },
+    "api_key": {
+      "type": "string",
+      "title": "PushGenius REST API key",
+      "description": "Dashboard > Settings > REST API key. Stored in your OS keychain, never in settings.json.",
+      "required": true,
+      "sensitive": true
+    },
+    "user_id": {
+      "type": "string",
+      "title": "Your external_id",
+      "description": "The ID you passed to login() on the device that should receive pushes (e.g. 'me').",
+      "required": true
+    },
+    "quiet_seconds": {
+      "type": "number",
+      "title": "Quiet period (seconds)",
+      "description": "Suppress a Stop push if one was sent fewer than this many seconds ago. 0 = push on every turn.",
+      "default": 0,
+      "min": 0
+    }
+  }
+}

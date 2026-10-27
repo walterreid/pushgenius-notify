@@ -1,0 +1,58 @@
+{
+  "description": "Send a PushGenius push when Claude finishes a turn, hits an API error, or needs you. UserPromptSubmit is a noisy test hook: remove it once pushes are confirmed.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/push.sh",
+            "args": [],
+            "async": true,
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt|idle_prompt|agent_needs_input|quota_auto_resume_fired|quota_auto_resume_stale|quota_auto_resume_disabled",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/push.sh",
+            "args": [],
+            "async": true,
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/push.sh",
+            "args": [],
+            "async": true,
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/push.sh",
+            "args": [],
+            "async": true,
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}

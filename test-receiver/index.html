@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PushGenius receiver</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 40rem; margin: 3rem auto; padding: 0 1rem; color: #222; background: #fff; }
+  label { display: block; margin-top: 1rem; font-weight: 600; }
+  input { width: 100%; padding: .5rem; font-size: 1rem; box-sizing: border-box; }
+  button { margin-top: 1rem; padding: .6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+  pre { background: #f4f4f4; padding: 1rem; overflow: auto; white-space: pre-wrap; }
+  .ok { color: #0a7; } .bad { color: #c33; }
+</style>
+<script src="https://api.pushgeni.us/sdk/web/v1/pushgenius.js" defer></script>
+</head>
+<body>
+<h1>PushGenius test receiver</h1>
+<p>This browser tab is the "device" the plugin pushes to. Fill in the app ID,
+click <b>Subscribe</b>, allow notifications, and this browser is registered under
+the external ID below. Keep Chrome running to receive pushes.</p>
+
+<label for="appId">App ID (dashboard → Settings → Web push)</label>
+<input id="appId" placeholder="xxxxxxxx-xxxx-...">
+<label for="extId">External ID (must match PUSHGENIUS_USER_ID)</label>
+<input id="extId" value="me">
+<button id="go">Subscribe &amp; login</button>
+<button id="check">Check status</button>
+<button id="received">Received so far</button>
+<pre id="log">waiting for SDK…</pre>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const log = (m, cls) => { const p = $("log"); p.textContent += "\n" + m; p.className = cls || ""; };
+const qs = new URLSearchParams(location.search);
+try {
+  $("appId").value = qs.get("app") || localStorage.getItem("pg_app") || "";
+  $("extId").value = qs.get("id") || localStorage.getItem("pg_ext") || "me";
+} catch (e) {}
+
+window.PushGeniusDeferred = window.PushGeniusDeferred || [];
+let PG = null, initialized = false;
+window.PushGeniusDeferred.push(async (PushGenius) => { PG = PushGenius; log("SDK loaded."); });
+
+async function init() {
+  if (initialized) return true;
+  const app = $("appId").value.trim();
+  if (!app) { log("App ID is empty.", "bad"); return false; }
+  if (!PG) { log("SDK not loaded yet; try again in a second.", "bad"); return false; }
+  try { localStorage.setItem("pg_app", app); } catch (e) {}
+  await PG.initialize(app);
+  initialized = true;
+  log("initialize(" + app + ") done.");
+  return true;
+}
+
+async function status() {
+  if (!initialized) return;
+  const perm = Notification.permission;
+  let opted = "?";
+  try { opted = PG.User.PushSubscription.optedIn; } catch (e) {}
+  log("Notification.permission=" + perm + "  optedIn=" + opted, opted === true ? "ok" : "");
+}
+
+$("go").onclick = async () => {
+  try {
+    if (!(await init())) return;
+    const ext = $("extId").value.trim() || "me";
+    try { localStorage.setItem("pg_ext", ext); } catch (e) {}
+    const subscribed = await PG.Notifications.requestPermission();
+    log("requestPermission() -> " + subscribed);
+    await PG.login(ext);
+    log('login("' + ext + '") done. Now run ./scripts/test-push.sh', "ok");
+    await status();
+  } catch (e) { log("ERROR: " + (e && e.message || e), "bad"); }
+};
+$("received").onclick = async () => {
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const list = reg ? await reg.getNotifications() : [];
+    log("This browser has " + list.length + " push notification(s) on record:");
+    list.sort((a, b) => a.timestamp - b.timestamp)
+        .forEach(n => { const t = n.timestamp ? new Date(n.timestamp).toLocaleTimeString() : "(no time)"; log("  " + t + "  " + n.title + " — " + n.body); });
+  } catch (e) { log("ERROR: " + e, "bad"); }
+};
+$("check").onclick = async () => { try { await init(); await status(); } catch (e) { log("ERROR: " + e, "bad"); } };
+
+PushGeniusDeferred.push(async (PushGenius) => {
+  PushGenius.Notifications.addClickListener((ev) => log("notification clicked: " + JSON.stringify(ev)));
+});
+</script>
+</body>
+</html>
