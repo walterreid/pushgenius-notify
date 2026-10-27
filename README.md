@@ -64,7 +64,7 @@ Inside the session, `/hooks` should list two entries from `pushgenius-notify`.
 Every hook run is logged with the API response:
 ```bash
 tail -n 5 ~/.claude/plugins/data/pushgenius-notify-inline/push.log   # --plugin-dir loads
-tail -n 5 ~/.claude/plugins/data/pushgenius-notify/push.log          # marketplace installs
+tail -n 5 ~/.claude/plugins/data/pushgenius-notify-walterreid-plugins/push.log   # marketplace installs
 ```
 
 ## 3. Test prompt
