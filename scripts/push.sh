@@ -15,6 +15,16 @@ APP_ID="${CLAUDE_PLUGIN_OPTION_APP_ID:-${PUSHGENIUS_APP_ID:-}}"
 API_KEY="${CLAUDE_PLUGIN_OPTION_API_KEY:-${PUSHGENIUS_API_KEY:-}}"
 USER_ID="${CLAUDE_PLUGIN_OPTION_USER_ID:-${PUSHGENIUS_USER_ID:-}}"
 QUIET="${CLAUDE_PLUGIN_OPTION_QUIET_SECONDS:-${PUSHGENIUS_QUIET_SECONDS:-0}}"
+
+# Per-event switches (plugin userConfig booleans, or PUSHGENIUS_PUSH_ON_* in .env).
+# Unset means the manifest default. Anything but false/0/no/off counts as on.
+ON_STOP="${CLAUDE_PLUGIN_OPTION_PUSH_ON_STOP:-${PUSHGENIUS_PUSH_ON_STOP:-true}}"
+ON_ERROR="${CLAUDE_PLUGIN_OPTION_PUSH_ON_ERROR:-${PUSHGENIUS_PUSH_ON_ERROR:-true}}"
+ON_NEEDS_YOU="${CLAUDE_PLUGIN_OPTION_PUSH_ON_NEEDS_YOU:-${PUSHGENIUS_PUSH_ON_NEEDS_YOU:-true}}"
+ON_IDLE="${CLAUDE_PLUGIN_OPTION_PUSH_ON_IDLE:-${PUSHGENIUS_PUSH_ON_IDLE:-false}}"
+ON_QUOTA="${CLAUDE_PLUGIN_OPTION_PUSH_ON_QUOTA:-${PUSHGENIUS_PUSH_ON_QUOTA:-true}}"
+ON_PROMPT="${CLAUDE_PLUGIN_OPTION_PUSH_ON_PROMPT:-${PUSHGENIUS_PUSH_ON_PROMPT:-false}}"
+is_on() { case "$(printf '%s' "$1" | tr 'A-Z' 'a-z')" in false|0|no|off) return 1 ;; *) return 0 ;; esac; }
 DRY_RUN="${PUSHGENIUS_DRY_RUN:-0}"
 
 DATA_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/pushgenius-notify}"
@@ -34,6 +44,23 @@ PROJECT="$(basename "${CWD:-project}")"
 # Skip Stop pushes that are just the tail of a stop-hook continuation loop.
 if [ "$EVENT" = "Stop" ] && [ "$(jq -r '.stop_hook_active // false' <<<"$INPUT")" = "true" ]; then
   log "Stop: stop_hook_active, skipping"; exit 0
+fi
+
+# Decide whether this event is switched on before doing any work.
+SWITCH=""; SWITCH_NAME=""
+case "$EVENT" in
+  Stop)             SWITCH="$ON_STOP";      SWITCH_NAME="push_on_stop" ;;
+  StopFailure)      SWITCH="$ON_ERROR";     SWITCH_NAME="push_on_error" ;;
+  UserPromptSubmit) SWITCH="$ON_PROMPT";    SWITCH_NAME="push_on_prompt" ;;
+  Notification)
+    case "$(jq -r '.notification_type // ""' <<<"$INPUT")" in
+      idle_prompt)         SWITCH="$ON_IDLE";      SWITCH_NAME="push_on_idle" ;;
+      quota_auto_resume_*) SWITCH="$ON_QUOTA";     SWITCH_NAME="push_on_quota" ;;
+      *)                   SWITCH="$ON_NEEDS_YOU"; SWITCH_NAME="push_on_needs_you" ;;
+    esac ;;
+esac
+if [ -n "$SWITCH_NAME" ] && ! is_on "$SWITCH"; then
+  log "$EVENT: skipped ($SWITCH_NAME is off)"; exit 0
 fi
 
 case "$EVENT" in

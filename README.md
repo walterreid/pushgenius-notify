@@ -79,13 +79,27 @@ You should get two pushes: one from the skill (immediate), one from the Stop hoo
 when Claude finishes the turn. Then run a command that needs permission and don't
 answer it; a third push ("Claude needs you") should arrive from the Notification hook.
 
-## 4. Events covered
-- `Stop`: "Claude finished", with the last message as the body.
-- `StopFailure`: "Claude hit an error", with the API error and its type.
-- `Notification`: "Claude needs you" for permission prompts, idle prompts and
-  agents waiting on input; "Claude usage limit" for the quota auto-resume events.
-- `UserPromptSubmit`: "Claude got your prompt". **Noisy test hook**, one push per
-  prompt you type. Delete its entry from `hooks/hooks.json` once pushes are confirmed.
+## 4. Events, and switching them on or off
+Every push title starts with the hook that fired it, e.g. `[Stop]` or
+`[Notification:permission_prompt]`. Each event has an on/off option:
+
+| Option | Default | Push |
+|---|---|---|
+| `push_on_stop` | on | `[Stop] Claude finished`, last message as the body |
+| `push_on_error` | on | `[StopFailure] Claude hit an error`, API error and type |
+| `push_on_needs_you` | on | `[Notification:permission_prompt]` / `agent_needs_input` "Claude needs you" |
+| `push_on_idle` | off | `[Notification:idle_prompt]`, a minute after a turn with no reply |
+| `push_on_quota` | on | `[Notification:quota_auto_resume_*] Claude usage limit` |
+| `push_on_prompt` | off | `[UserPromptSubmit] Claude got your prompt`, one per prompt (test only) |
+
+Flip them in `/config` (they're plain rows under the plugin), or from the session:
+```
+/pushgenius-notify:events status
+/pushgenius-notify:events off prompt idle
+/pushgenius-notify:events on idle
+```
+Changes apply after `/reload-plugins`. With `--plugin-dir` and no config, the same
+switches are `PUSHGENIUS_PUSH_ON_*` in `.env`.
 
 ## 5. Things you'll want to change next
 - `quiet_seconds` in plugin config: suppress pushes on rapid back-and-forth turns.

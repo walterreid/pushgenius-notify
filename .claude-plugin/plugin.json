@@ -2,7 +2,7 @@
   "name": "pushgenius-notify",
   "displayName": "PushGenius Notify",
   "description": "Push a notification to your phone (via PushGenius) when Claude Code finishes a turn or is blocked waiting on you.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "Walter Reid",
     "email": "walterreid@gmail.com"
@@ -38,6 +38,42 @@
       "title": "Your external_id",
       "description": "The ID you passed to login() on the device that should receive pushes (e.g. 'me').",
       "required": true
+    },
+    "push_on_stop": {
+      "type": "boolean",
+      "title": "Push when Claude finishes a turn",
+      "description": "Stop hook: one push per completed turn, with the last message as the body.",
+      "default": true
+    },
+    "push_on_error": {
+      "type": "boolean",
+      "title": "Push when a turn dies on an API error",
+      "description": "StopFailure hook: rate limits, auth failures, server errors.",
+      "default": true
+    },
+    "push_on_needs_you": {
+      "type": "boolean",
+      "title": "Push when Claude is blocked on you",
+      "description": "Permission prompts and agents waiting for input.",
+      "default": true
+    },
+    "push_on_idle": {
+      "type": "boolean",
+      "title": "Push when Claude has been idle a minute",
+      "description": "idle_prompt notification: fires about 60s after a turn ends with no reply. Off by default because it doubles up with the finished push.",
+      "default": false
+    },
+    "push_on_quota": {
+      "type": "boolean",
+      "title": "Push on usage-limit events",
+      "description": "When a task paused by a usage limit resumes, goes stale, or gives up.",
+      "default": true
+    },
+    "push_on_prompt": {
+      "type": "boolean",
+      "title": "Push on every prompt you type (test only)",
+      "description": "UserPromptSubmit hook. Useful to confirm pushes arrive; very noisy otherwise.",
+      "default": false
     },
     "quiet_seconds": {
       "type": "number",

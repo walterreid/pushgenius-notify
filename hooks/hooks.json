@@ -1,5 +1,5 @@
 {
-  "description": "Send a PushGenius push when Claude finishes a turn, hits an API error, or needs you. UserPromptSubmit is a noisy test hook: remove it once pushes are confirmed.",
+  "description": "Send a PushGenius push on Stop, StopFailure, Notification and UserPromptSubmit. Each event is switched on or off by the plugin's push_on_* options; the script exits early for events that are off.",
   "hooks": {
     "Stop": [
       {
